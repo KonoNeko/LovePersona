@@ -336,4 +336,485 @@ const TypeBrowser = ({
              <div className="w-full md:w-1/2 h-full overflow-y-auto p-6 md:p-12 bg-white/40 backdrop-blur-xl md:border-l border-white/40 relative scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
                  <div className="hidden md:block mb-8">
                      <div className="flex items-center gap-3 mb-4">
-                        <span className={`px-3 py-1 bg-white border ${catConfig.border} ${catConfig
+                        <span className={`px-3 py-1 bg-white border ${catConfig.border} ${catConfig.color} text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
+                            {activeProfile.category} Series
+                        </span>
+                        <span className={`px-3 py-1 ${catConfig.bg} ${catConfig.color} text-xs font-bold rounded-full`}>
+                            {activeProfile.code}
+                        </span>
+                     </div>
+                     <h1 className="text-5xl font-black text-slate-800 mb-2 tracking-tight leading-tight">{activeProfile.nickname}</h1>
+                     <p className={`text-xl font-bold ${catConfig.color} mb-4`}>{activeProfile.name}</p>
+                     
+                     {/* Tags Display */}
+                     <div className="flex flex-wrap gap-2 mb-2">
+                        {activeProfile.tags && activeProfile.tags.map(tag => (
+                            <span key={tag} className={`px-3 py-1 rounded-lg text-xs font-bold bg-white border ${catConfig.border} ${catConfig.color} shadow-sm`}>
+                                #{tag}
+                            </span>
+                        ))}
+                     </div>
+                 </div>
+
+                 <div className="space-y-6 relative z-10">
+                    <div className="relative mb-8">
+                        <Quote className="absolute -top-4 -left-2 w-8 h-8 text-slate-300 fill-current" />
+                        <p className="text-lg md:text-xl font-medium leading-relaxed text-slate-600 italic pl-6 border-l-4 border-slate-300">
+                           "{activeProfile.definition}"
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        <AnalysisCard title="深度人格结构" content={activeProfile.structure} icon={Brain} colorClass={catConfig.color} borderClass={catConfig.border} />
+                        <AnalysisCard title="恋爱行为模式" content={activeProfile.behavior} icon={Heart} colorClass={catConfig.color} borderClass={catConfig.border} />
+                        <AnalysisCard title="优势特质" content={activeProfile.strengths} icon={Sparkles} colorClass={catConfig.color} borderClass={catConfig.border} />
+                        <AnalysisCard title="恋爱盲点" content={activeProfile.blindSpots} icon={AlertTriangle} colorClass={catConfig.color} borderClass={catConfig.border} />
+                        <AnalysisCard title="适合的伴侣" content={activeProfile.partners} icon={Users} colorClass={catConfig.color} borderClass={catConfig.border} />
+                        <AnalysisCard title="相处建议" content={activeProfile.advice} icon={Lightbulb} colorClass={catConfig.color} borderClass={catConfig.border} />
+                    </div>
+                 </div>
+             </div>
+
+          </div>
+       </div>
+    </div>
+  );
+};
+
+
+// 1. Welcome Screen
+const WelcomeScreen = ({ 
+  onStart, 
+  gender, 
+  setGender 
+}: { 
+  onStart: () => void, 
+  gender: Gender | null, 
+  setGender: (g: Gender) => void 
+}) => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative overflow-hidden p-6 text-center bg-slate-50">
+      {/* Pastel Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-100 via-sky-100 to-rose-100 z-0"></div>
+      
+      {/* Floating Blobs (Macaron Colors) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-200/40 rounded-full blur-[80px] animate-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-pink-200/40 rounded-full blur-[80px] animate-pulse"></div>
+
+      <div className="bg-white/70 backdrop-blur-xl p-10 rounded-[2rem] shadow-xl max-w-md w-full border border-white/60 transform transition-all z-10 relative">
+        <div className="w-24 h-24 bg-gradient-to-tr from-violet-400 to-rose-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-rose-200 border-4 border-white animate-pulse">
+          <Heart className="text-white w-12 h-12 drop-shadow-sm" fill="currentColor" />
+        </div>
+        
+        <h1 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">LovePersona AI</h1>
+        <p className="text-violet-500 font-bold mb-8 tracking-wide text-lg">AI 驱动的 MBTI 恋爱人格深度解析</p>
+        
+        <p className="text-slate-600 mb-8 leading-relaxed font-medium text-lg">
+          融合 <span className="text-indigo-500 font-bold">MBTI</span>、深度心理学与依恋理论，<br/>
+          全维度解码你的恋爱基因。
+          <br className="mb-4"/>
+          请选择你的性别，解锁 AI 为你定制的<span className="text-rose-500 font-bold px-1">专属形象</span>。
+        </p>
+
+        {/* Gender Selection */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+           <button 
+             onClick={() => setGender('male')}
+             className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all group ${gender === 'male' ? 'border-violet-400 bg-violet-50 text-violet-700 shadow-md scale-105' : 'border-slate-100 bg-white/50 text-slate-400 hover:bg-white hover:border-slate-200'}`}
+           >
+             <User2 className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
+             <span className="font-bold text-lg">我是男生</span>
+           </button>
+           <button 
+             onClick={() => setGender('female')}
+             className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all group ${gender === 'female' ? 'border-rose-400 bg-rose-50 text-rose-700 shadow-md scale-105' : 'border-slate-100 bg-white/50 text-slate-400 hover:bg-white hover:border-slate-200'}`}
+           >
+             <User2 className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
+             <span className="font-bold text-lg">我是女生</span>
+           </button>
+        </div>
+
+        <button
+          onClick={onStart}
+          disabled={!gender}
+          className={`w-full font-black py-4 px-8 rounded-2xl text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 border-2 ${
+            gender 
+            ? 'bg-slate-800 text-white border-transparent hover:scale-[1.02] hover:shadow-xl' 
+            : 'bg-slate-200 text-slate-400 border-transparent cursor-not-allowed'
+          }`}
+        >
+          <Sparkles className="w-5 h-5" />
+          {gender ? '开始深度测试' : '请先选择性别'}
+        </button>
+        
+        <p className="text-xs text-slate-400 mt-6 font-mono tracking-widest uppercase">EST • 5-8 MINS</p>
+      </div>
+    </div>
+  );
+};
+
+// Likert Scale (Unchanged)
+const LikertScale = ({ 
+  value, 
+  onChange 
+}: { 
+  value: number | undefined, 
+  onChange: (val: number) => void 
+}) => {
+  return (
+    <div className="flex items-center justify-between w-full max-w-md mx-auto my-4 px-2 sm:px-4">
+      <span className="text-xs font-bold text-emerald-500 uppercase hidden sm:block mr-2">同意</span>
+      <div className="flex items-center justify-between flex-1 gap-1 sm:gap-3">
+        <button onClick={() => onChange(3)} className={`rounded-full border-2 transition-all duration-200 ${value === 3 ? 'bg-emerald-400 border-emerald-400 scale-110 shadow-md' : 'bg-transparent border-emerald-300 hover:bg-emerald-100'} w-12 h-12 md:w-14 md:h-14`} aria-label="Strongly Agree" />
+        <button onClick={() => onChange(2)} className={`rounded-full border-2 transition-all duration-200 ${value === 2 ? 'bg-emerald-400 border-emerald-400 scale-110 shadow-md' : 'bg-transparent border-emerald-300 hover:bg-emerald-100'} w-9 h-9 md:w-11 md:h-11`} aria-label="Agree" />
+        <button onClick={() => onChange(1)} className={`rounded-full border-2 transition-all duration-200 ${value === 1 ? 'bg-emerald-400 border-emerald-400 scale-110 shadow-md' : 'bg-transparent border-emerald-300 hover:bg-emerald-100'} w-7 h-7 md:w-8 md:h-8`} aria-label="Slightly Agree" />
+        <button onClick={() => onChange(0)} className={`rounded-full border-2 transition-all duration-200 ${value === 0 ? 'bg-slate-300 border-slate-300 scale-110' : 'bg-transparent border-slate-300 hover:bg-slate-100'} w-5 h-5 md:w-6 md:h-6`} aria-label="Neutral" />
+        <button onClick={() => onChange(-1)} className={`rounded-full border-2 transition-all duration-200 ${value === -1 ? 'bg-rose-400 border-rose-400 scale-110 shadow-md' : 'bg-transparent border-rose-300 hover:bg-rose-100'} w-7 h-7 md:w-8 md:h-8`} aria-label="Slightly Disagree" />
+        <button onClick={() => onChange(-2)} className={`rounded-full border-2 transition-all duration-200 ${value === -2 ? 'bg-rose-400 border-rose-400 scale-110 shadow-md' : 'bg-transparent border-rose-300 hover:bg-rose-100'} w-9 h-9 md:w-11 md:h-11`} aria-label="Disagree" />
+        <button onClick={() => onChange(-3)} className={`rounded-full border-2 transition-all duration-200 ${value === -3 ? 'bg-rose-400 border-rose-400 scale-110 shadow-md' : 'bg-transparent border-rose-300 hover:bg-rose-100'} w-12 h-12 md:w-14 md:h-14`} aria-label="Strongly Disagree" />
+      </div>
+      <span className="text-xs font-bold text-rose-500 uppercase hidden sm:block ml-2">反对</span>
+    </div>
+  );
+};
+
+// Quiz Screen (Unchanged)
+const QuizScreen = ({ 
+  questions, 
+  answers,
+  onAnswer,
+  onFinish
+}: { 
+  questions: Question[], 
+  answers: Record<number, number>,
+  onAnswer: (qId: number, val: number) => void,
+  onFinish: () => void
+}) => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
+  const startIndex = currentPage * QUESTIONS_PER_PAGE;
+  const currentQuestions = questions.slice(startIndex, startIndex + QUESTIONS_PER_PAGE);
+  const answeredCount = Object.keys(answers).length;
+  const progressPercent = (answeredCount / questions.length) * 100;
+  const canProceed = currentQuestions.every(q => answers[q.id] !== undefined);
+
+  const handleNext = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(prev => prev + 1);
+      window.scrollTo(0, 0);
+    } else {
+      onFinish();
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center min-h-[calc(100vh-64px)] bg-slate-50 pb-12 text-slate-800">
+      <div className="sticky top-16 w-full bg-white/90 backdrop-blur z-10 shadow-sm border-b border-slate-200">
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+             <span>进度</span>
+             <span>{Math.round(progressPercent)}%</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2">
+            <div className="bg-gradient-to-r from-emerald-400 to-violet-400 h-2 rounded-full transition-all duration-500 ease-out shadow-sm" style={{ width: `${progressPercent}%` }}></div>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-3xl w-full px-4 py-8 space-y-12">
+        {currentQuestions.map((q) => (
+          <div key={q.id} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+            <h3 className="text-lg md:text-xl font-medium text-slate-700 text-center mb-8 leading-relaxed">{q.text}</h3>
+            <LikertScale value={answers[q.id]} onChange={(val) => onAnswer(q.id, val)} />
+            <div className="flex justify-between text-xs font-bold uppercase mt-4 px-2 sm:hidden">
+              <span className="text-emerald-500">同意</span>
+              <span className="text-rose-500">反对</span>
+            </div>
+          </div>
+        ))}
+        <div className="flex justify-center pt-6">
+          <button
+            onClick={handleNext}
+            disabled={!canProceed}
+            className={`px-10 py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-300 transform border-2 ${canProceed ? 'bg-slate-800 text-white border-transparent hover:scale-105 hover:shadow-xl' : 'bg-slate-200 text-slate-400 border-transparent cursor-not-allowed'}`}
+          >
+            {currentPage === totalPages - 1 ? '查看结果' : '下一页'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 3. Result Screen
+const ResultScreen = ({ 
+  profile, 
+  onRetake,
+  gender,
+  imageCache,
+  setImageCache
+}: { 
+  profile: PersonalityProfile, 
+  onRetake: () => void,
+  gender: Gender,
+  imageCache: Record<string, string>,
+  setImageCache: React.Dispatch<React.SetStateAction<Record<string, string>>>
+}) => {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const category = CATEGORIES[profile.category];
+  const ProfileIcon = getIconComponent(profile.icon);
+  const cacheKey = `${profile.code}_${gender}`;
+
+  // Generate image on mount
+  useEffect(() => {
+    // Check cache first
+    if (imageCache[cacheKey]) {
+        setAvatarUrl(imageCache[cacheKey]);
+        setIsLoading(false);
+        return;
+    }
+
+    const fetchAvatar = async () => {
+        setIsLoading(true);
+        try {
+            const url = await generateAvatar(profile, gender);
+            setAvatarUrl(url);
+            setImageCache(prev => ({ ...prev, [cacheKey]: url }));
+        } catch (error) {
+            console.error("Failed to generate avatar", error);
+            // Optional: Set an error state or fallback
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    fetchAvatar();
+  }, [profile, gender, cacheKey, imageCache, setImageCache]);
+
+  // Handle Regenerate logic
+  const handleRegenerate = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+        const url = await generateAvatar(profile, gender);
+        setAvatarUrl(url);
+        setImageCache(prev => ({ ...prev, [cacheKey]: url }));
+    } catch (error) {
+        console.error("Failed to regenerate avatar", error);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className={`min-h-[calc(100vh-64px)] w-full flex flex-col md:flex-row ${category.bg} transition-colors duration-700`}>
+      
+      {/* Left Column: Image Container (Fixed Width on Desktop, Aspect Ratio on Mobile) */}
+      <div className="w-full md:w-1/3 lg:w-[450px] bg-white relative flex-shrink-0 shadow-2xl z-10 md:h-[calc(100vh-64px)] md:sticky md:top-16">
+        {/* Style Overlay */}
+        <div className={`absolute inset-0 z-10 pointer-events-none mix-blend-overlay opacity-20 bg-gradient-to-b ${category.themeColor}`}></div>
+        
+        {/* Loading State Overlay */}
+        {isLoading && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+                <Loader2 className={`w-12 h-12 animate-spin ${category.color} mb-4`} />
+                <p className={`font-bold ${category.color} animate-pulse`}>正在为您的恋爱人格绘图...</p>
+                <p className="text-xs text-slate-400 mt-2">AI 正在绘制马卡龙风格形象</p>
+            </div>
+        )}
+
+        {/* Regenerate Button Overlay */}
+        <div className="absolute top-4 right-4 z-30 flex gap-2">
+             <button
+                onClick={handleRegenerate}
+                disabled={isLoading}
+                title="重新生成形象"
+                className={`p-2 rounded-full bg-white/70 backdrop-blur-md border border-white/50 text-slate-700 shadow-sm hover:bg-white transition-all disabled:opacity-50 ${category.color}`}
+             >
+                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+             </button>
+        </div>
+
+        {/* Image - Mobile uses strict aspect-ratio [9/16] to prevent cropping. Desktop fills height. */}
+        <div className="w-full aspect-[9/16] md:h-full md:aspect-auto relative overflow-hidden bg-slate-200">
+            {avatarUrl && !isLoading ? (
+               <img 
+                src={avatarUrl} 
+                alt="Avatar" 
+                className="w-full h-full object-cover object-center animate-in fade-in duration-700" 
+                style={{ filter: "brightness(105%) saturate(95%) contrast(95%)" }}
+               />
+            ) : null}
+        </div>
+        
+        {/* Mobile-only overlay info (Bottom) */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-20 md:hidden bg-gradient-to-t from-white/90 to-transparent pointer-events-none">
+             <h1 className="text-3xl font-black text-slate-800 mb-1">{profile.nickname}</h1>
+             <p className={`font-bold ${category.color}`}>{profile.name}</p>
+        </div>
+      </div>
+
+      {/* Right Column: Content (Scrollable) */}
+      <div className="flex-1 max-w-4xl mx-auto p-6 md:p-12 md:overflow-y-auto">
+        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl p-8 border border-white/60 mb-8">
+          <div className="flex justify-between items-start mb-6">
+             <div>
+                <div className={`inline-flex items-center gap-2 px-3 py-1 bg-white text-slate-700 border ${category.border} text-sm font-bold rounded-full mb-3 shadow-sm`}>
+                   <span>{category.title}</span>
+                   <span>•</span>
+                   <span>{profile.code}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <h1 className="hidden md:block text-4xl font-black text-slate-800">{profile.nickname}</h1>
+                    <div className={`p-2 bg-white rounded-lg border ${category.border} shadow-sm`}>
+                        <ProfileIcon className={`w-6 h-6 ${category.color}`} />
+                    </div>
+                </div>
+                <h2 className={`hidden md:block text-xl ${category.color} font-bold mt-2 opacity-80 mb-4`}>{profile.name}</h2>
+                
+                {/* Tags Display */}
+                <div className="flex flex-wrap gap-2">
+                    {profile.tags && profile.tags.map(tag => (
+                        <span key={tag} className={`px-3 py-1 rounded-lg text-xs font-bold bg-white border ${category.border} ${category.color} shadow-sm`}>
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+             </div>
+             <button onClick={onRetake} className="text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1">
+                <RefreshCw className="w-6 h-6" />
+                <span className="text-[10px] uppercase font-bold">重测</span>
+             </button>
+          </div>
+
+          <div className="space-y-6">
+             <div className="relative mb-8">
+                <Quote className="absolute -top-4 -left-2 w-8 h-8 text-slate-300 fill-current" />
+                <p className="text-lg font-medium leading-relaxed text-slate-600 italic pl-6 border-l-4 border-slate-300">
+                   "{profile.definition}"
+                </p>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <AnalysisCard title="深度人格结构" content={profile.structure} icon={Brain} colorClass={category.color} borderClass={category.border} />
+                 <AnalysisCard title="恋爱行为模式" content={profile.behavior} icon={Heart} colorClass={category.color} borderClass={category.border} />
+                 <AnalysisCard title="优势特质" content={profile.strengths} icon={Sparkles} colorClass={category.color} borderClass={category.border} />
+                 <AnalysisCard title="恋爱盲点" content={profile.blindSpots} icon={AlertTriangle} colorClass={category.color} borderClass={category.border} />
+                 <AnalysisCard title="适合的伴侣" content={profile.partners} icon={Users} colorClass={category.color} borderClass={category.border} />
+                 <AnalysisCard title="相处建议" content={profile.advice} icon={Lightbulb} colorClass={category.color} borderClass={category.border} />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main App Logic (Unchanged) ---
+export default function App() {
+  const [activeTab, setActiveTab] = useState<'home' | 'dex'>('home');
+  const [screen, setScreen] = useState<'welcome' | 'quiz' | 'result'>('welcome');
+  
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [gender, setGender] = useState<Gender | null>(null);
+  const [resultProfile, setResultProfile] = useState<PersonalityProfile | null>(null);
+  
+  // Image Cache Lifted to App Level to persist across tab switches
+  const [imageCache, setImageCache] = useState<Record<string, string>>({});
+
+  const startQuiz = () => {
+    setAnswers({});
+    setScreen('quiz');
+  };
+
+  const handleTabChange = (tab: 'home' | 'dex') => {
+    setActiveTab(tab);
+    if (tab === 'home') {
+        // Stay on current screen
+    } else {
+        // Switch to Dex view
+        window.scrollTo(0, 0);
+    }
+  };
+
+  const handleAnswer = (questionId: number, value: number) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  };
+
+  const calculateResult = () => {
+    const scores: Record<DimensionType, number> = { 'EI': 0, 'NS': 0, 'FT': 0, 'AD': 0 };
+    QUESTIONS.forEach(q => {
+      const val = answers[q.id] || 0;
+      scores[q.dimension] += (val * q.direction);
+    });
+
+    // Optimization: Ensure strict defaults for 0 scores.
+    // > 0 maps to First Letter (E, N, F, A)
+    // <= 0 maps to Second Letter (I, S, T, D)
+    // This biases "ties" towards Introversion, Sensing, Thinking, and Dismissive/Avoidant.
+    // This is a common psychometric convention to avoid 'ambiversion' in 16-type systems unless designed otherwise.
+    
+    const l1 = scores['EI'] > 0 ? 'E' : 'I';
+    const l2 = scores['NS'] > 0 ? 'N' : 'S';
+    const l3 = scores['FT'] > 0 ? 'F' : 'T';
+    const l4 = scores['AD'] > 0 ? 'A' : 'D';
+
+    const code = `${l1}${l2}${l3}${l4}`;
+    const profile = PERSONALITIES[code] || PERSONALITIES['ENFA']; // Fallback
+    setResultProfile(profile);
+    setScreen('result');
+    window.scrollTo(0,0);
+  };
+
+  const retakeQuiz = () => {
+    setScreen('welcome');
+    setAnswers({});
+    setResultProfile(null);
+    setGender(null); 
+  };
+
+  return (
+    <div className="antialiased text-slate-700 font-sans min-h-screen flex flex-col bg-slate-50">
+      <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
+      
+      <main className="flex-grow">
+        {activeTab === 'dex' ? (
+           <TypeBrowser 
+                imageCache={imageCache} 
+                setImageCache={setImageCache} 
+           />
+        ) : (
+            <>
+                {screen === 'welcome' && (
+                    <WelcomeScreen 
+                        onStart={startQuiz} 
+                        gender={gender}
+                        setGender={setGender}
+                    />
+                )}
+                
+                {screen === 'quiz' && (
+                    <QuizScreen 
+                    questions={QUESTIONS}
+                    answers={answers}
+                    onAnswer={handleAnswer}
+                    onFinish={calculateResult}
+                    />
+                )}
+
+                {screen === 'result' && resultProfile && gender && (
+                    <ResultScreen 
+                        profile={resultProfile} 
+                        onRetake={retakeQuiz}
+                        gender={gender}
+                        imageCache={imageCache}
+                        setImageCache={setImageCache}
+                    />
+                )}
+            </>
+        )}
+      </main>
+    </div>
+  );
+}
