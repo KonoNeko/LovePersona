@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { inject } from '@vercel/analytics';
 import { Sparkles, Heart, RefreshCw, BookOpen, X, Info, Home, User2, ChevronRight, ChevronLeft, Quote, Zap, Shield, Compass, Dog, Flower2, Feather, Moon, Brain, Gamepad2, Scroll, Snowflake, ShieldAlert, Hammer, Sword, Briefcase, Sun, Wind, Cloud, Coffee, AlertTriangle, Lightbulb, Users, Search, Loader2, Download, Image as ImageIcon, FileImage, Share2, Link as LinkIcon, Check, MessageCircle, Battery, Wallet, Flame, Archive, Trash2, Calendar, ArrowRight, MoreVertical, GraduationCap, Library, Book, Copy, Menu, Palette, Clock, Layers } from 'lucide-react';
 import { QUESTIONS, PERSONALITIES, CATEGORIES, ART_STYLES } from './constants';
 import { DimensionType, PersonalityProfile, CategoryKey, Question, Gender, ArtStyleKey } from './types';
@@ -15,6 +16,7 @@ interface SavedResult {
 }
 
 // ...existing code...
+inject(); // 初始化 Vercel Analytics
 // --- Icon Mapping Helper ---
 const getIconComponent = (iconName: string) => {
   const icons: Record<string, any> = {
