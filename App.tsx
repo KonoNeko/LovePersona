@@ -14,6 +14,7 @@ interface SavedResult {
     date: string;
 }
 
+// ...existing code...
 // --- Icon Mapping Helper ---
 const getIconComponent = (iconName: string) => {
   const icons: Record<string, any> = {
@@ -26,43 +27,57 @@ const getIconComponent = (iconName: string) => {
   return icons[iconName] || Heart;
 };
 
-// --- Helper: Share Functionality ---
-const handleShare = async (title: string, text: string, imageUrl?: string | null) => {
-    // 1. Try Native Share API
-    if (navigator.share) {
-        try {
-            const shareData: any = {
-                title: title,
-                text: text,
-            };
-
-            // If we have an image, try to convert base64 to File for sharing
-            if (imageUrl && imageUrl.startsWith('data:image')) {
-                const res = await fetch(imageUrl);
-                const blob = await res.blob();
-                const file = new File([blob], "share_image.png", { type: "image/png" });
-                const filesArray = [file];
-                
-                // Check if sharing files is supported
-                if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-                    shareData.files = filesArray;
-                }
+// --- Helper: Add Watermark to Image ---
+const addWatermarkToImage = async (imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(imageUrl);
+                return;
             }
-            
-            await navigator.share(shareData);
-            return;
-        } catch (error) {
-            console.log('Error sharing:', error);
-            // Fallback to clipboard if user cancelled or error, but we usually want specific fallback logic below
-        }
-    }
 
-    // 2. Fallback: Copy to Clipboard
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // Draw original image
+            ctx.drawImage(img, 0, 0);
+
+            // Add watermark
+            const watermarkText = 'LovePersona.vercel.app';
+            const fontSize = Math.max(20, img.width * 0.04);
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+
+            // Position watermark at bottom right
+            const padding = 20;
+            const textMetrics = ctx.measureText(watermarkText);
+            const x = canvas.width - textMetrics.width - padding;
+            const y = canvas.height - padding;
+
+            ctx.strokeText(watermarkText, x, y);
+            ctx.fillText(watermarkText, x, y);
+
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.src = imageUrl;
+    });
+};
+
+// --- Helper: Share Functionality ---
+const handleShare = async (title: string, text: string, imageUrl?: string | null, shareUrl?: string) => {
+    const websiteUrl = shareUrl || 'https://love-persona.vercel.app/';
+    // Only copy the link to clipboard
     try {
-        await navigator.clipboard.writeText(`${title}\n\n${text}`);
-        alert('内容已复制到剪贴板，快去分享吧！');
+        await navigator.clipboard.writeText(websiteUrl);
+        // No alert, toast handled in TypeBrowser
     } catch (err) {
-        alert('分享失败，请截图分享。');
+        // Optionally handle error toast in the future
     }
 };
 
@@ -701,6 +716,8 @@ const ResultScreen = ({ profile, gender, onRetake, imageCache, setImageCache, ar
         }
     };
 
+    const [showCopiedToast, setShowCopiedToast] = useState(false);
+
     return (
         <div className="min-h-[calc(100vh-64px)] bg-slate-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden min-h-[80vh] flex flex-col xl:flex-row">
@@ -742,7 +759,16 @@ const ResultScreen = ({ profile, gender, onRetake, imageCache, setImageCache, ar
                         </span>
                         <div className="ml-auto flex gap-2">
                             <button 
-                              onClick={() => handleShare(`LovePersona: ${profile.nickname}`, `我是${profile.nickname} (${profile.code}) - ${profile.name}。\n\n${profile.definition}`, avatarUrl)}
+                              onClick={async () => {
+                                await handleShare(
+                                  `LovePersona: ${profile.nickname}`,
+                                  `我是${profile.nickname} (${profile.code}) - ${profile.name}。\n\n${profile.definition}`,
+                                  avatarUrl,
+                                  `https://love-persona.vercel.app/#${profile.code}`
+                                );
+                                setShowCopiedToast(true);
+                                setTimeout(() => setShowCopiedToast(false), 2000);
+                              }}
                               className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
                             >
                               <Share2 className="w-5 h-5" />
@@ -764,6 +790,16 @@ const ResultScreen = ({ profile, gender, onRetake, imageCache, setImageCache, ar
                     </div>
 
                      <div className="prose prose-slate max-w-none">
+
+                    {/* Copied Toast for mobile/desktop */}
+                    {showCopiedToast && (
+                      <div
+                        className="fixed left-1/2 bottom-8 z-50 px-6 py-3 rounded-full bg-black bg-opacity-80 text-white text-sm font-bold shadow-lg transform -translate-x-1/2 transition-all animate-in fade-in"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        已复制链接
+                      </div>
+                    )}
                         <div className="bg-slate-50 border-l-4 border-slate-300 p-6 rounded-r-xl mb-10">
                             <p className="text-lg text-slate-700 italic m-0 font-medium leading-loose">"{profile.definition}"</p>
                         </div>
@@ -1020,13 +1056,40 @@ const KnowledgeScreen = () => {
 
 // --- TypeBrowser Component ---
 const TypeBrowser = ({ imageCache, setImageCache, artStyle }: any) => {
+        const [showCopiedToast, setShowCopiedToast] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('NT');
     const [selectedCode, setSelectedCode] = useState<string>('ENTA'); // Default to first NT
     
     useEffect(() => {
         const firstInCat = Object.values(PERSONALITIES).find(p => p.category === selectedCategory);
-        if (firstInCat) setSelectedCode(firstInCat.code);
+        if (firstInCat && (!PERSONALITIES[selectedCode] || PERSONALITIES[selectedCode].category !== selectedCategory)) {
+            setSelectedCode(firstInCat.code);
+        }
     }, [selectedCategory]);
+
+    // On mount, check hash for direct navigation
+    useEffect(() => {
+        if (window.location.hash) {
+            const hashCode = window.location.hash.replace('#', '').toUpperCase();
+            const profile = PERSONALITIES[hashCode];
+            if (profile) {
+                setSelectedCategory(profile.category);
+                setSelectedCode(profile.code);
+                setTimeout(() => {
+                    const el = document.querySelector(`[data-profile-code='${profile.code}']`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 200);
+            }
+        }
+    }, []);
+
+    // When user selects a profile, update hash
+    const handleSelectProfile = (code: string) => {
+        setSelectedCode(code);
+        window.location.hash = `#${code}`;
+    };
 
     const profile = PERSONALITIES[selectedCode];
     const config = CATEGORIES[selectedCategory];
@@ -1162,7 +1225,8 @@ const TypeBrowser = ({ imageCache, setImageCache, artStyle }: any) => {
                             return (
                                 <div 
                                     key={p.code}
-                                    onClick={() => setSelectedCode(p.code)}
+                                    data-profile-code={p.code}
+                                    onClick={() => handleSelectProfile(p.code)}
                                     className={`p-4 rounded-xl cursor-pointer transition-all flex items-center gap-4 ${
                                         isActive 
                                         ? `bg-white shadow-md shadow-slate-200 scale-100 border ${config.border}` 
@@ -1220,12 +1284,30 @@ const TypeBrowser = ({ imageCache, setImageCache, artStyle }: any) => {
                                     <span className="px-4 py-1.5 rounded-full text-sm font-black uppercase tracking-wider bg-slate-100 text-slate-500">
                                         {profile.code}
                                     </span>
-                                    <button 
-                                      onClick={() => handleShare(`LovePersona: ${profile.nickname}`, `我是${profile.nickname} (${profile.code}) - ${profile.name}。\n\n${profile.definition}`, avatarUrl)}
-                                      className="ml-auto p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" title="分享"
-                                    >
-                                      <Share2 className="w-5 h-5" />
-                                    </button>
+                                                                        <button 
+                                                                            onClick={async () => {
+                                                                                await handleShare(
+                                                                                    `LovePersona: ${profile.nickname}`,
+                                                                                    `我是${profile.nickname} (${profile.code}) - ${profile.name}。\n\n${profile.definition}`,
+                                                                                    avatarUrl,
+                                                                                    `https://love-persona.vercel.app/#${profile.code}`
+                                                                                );
+                                                                                setShowCopiedToast(true);
+                                                                                setTimeout(() => setShowCopiedToast(false), 2000);
+                                                                            }}
+                                                                            className="ml-auto p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" title="分享"
+                                                                        >
+                                                                            <Share2 className="w-5 h-5" />
+                                                                        </button>
+                                        {/* Copied Toast for mobile/desktop */}
+                                        {showCopiedToast && (
+                                            <div
+                                                className="fixed left-1/2 bottom-8 z-50 px-6 py-3 rounded-full bg-black bg-opacity-80 text-white text-sm font-bold shadow-lg transform -translate-x-1/2 transition-all animate-in fade-in"
+                                                style={{ pointerEvents: 'none' }}
+                                            >
+                                                已复制链接
+                                            </div>
+                                        )}
                                 </div>
                                 <h1 className="text-5xl md:text-6xl font-black text-slate-800 mb-2 tracking-tight">
                                     {profile.nickname}
@@ -1247,6 +1329,13 @@ const TypeBrowser = ({ imageCache, setImageCache, artStyle }: any) => {
                                 </div>
 
                                 <div className="space-y-6">
+                                    <AnalysisCard 
+                                        title="AI锐评" 
+                                        content={profile.roast} 
+                                        icon={Zap} 
+                                        colorClass={config.color} 
+                                        borderClass={config.border} 
+                                    />
                                     <AnalysisCard 
                                         title="深度人格结构" 
                                         content={profile.structure} 
@@ -1301,12 +1390,17 @@ const MatchMaker = () => {
     const [result, setResult] = useState<MatchResult | null>(null);
     const [showP1Picker, setShowP1Picker] = useState(false);
     const [showP2Picker, setShowP2Picker] = useState(false);
+    const resultRef = useRef<HTMLDivElement>(null);
 
     const handleAnalyze = () => {
         const p1 = PERSONALITIES[p1Code];
         const p2 = PERSONALITIES[p2Code];
         if (p1 && p2) {
             setResult(analyzeCompatibility(p1, p2));
+            // 等待 DOM 更新后滚动到结果
+            setTimeout(() => {
+                resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
     };
 
@@ -1466,7 +1560,7 @@ const MatchMaker = () => {
                 {showP2Picker && <PersonalityPicker selectedCode={p2Code} onSelect={setP2Code} onClose={() => setShowP2Picker(false)} />}
 
                 {result && (
-                    <div className="space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-500">
+                    <div ref={resultRef} className="space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-500 scroll-mt-20">
                         {/* Score Card */}
                         <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-32 bg-indigo-500 rounded-full blur-[100px] opacity-30"></div>
@@ -1706,86 +1800,91 @@ const App = () => {
   );
 
   const Navbar = () => (
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16">
-          <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-              {/* Logo */}
-              <div 
-                  className="flex items-center gap-2 cursor-pointer group" 
-                  onClick={() => { setCurrentScreen('welcome'); setIsMenuOpen(false); }}
-              >
-                  <div className="bg-gradient-to-tr from-rose-500 to-indigo-600 p-1.5 rounded-lg text-white group-hover:scale-110 transition-transform">
-                      <Heart className="w-4 h-4 fill-white" />
+      <>
+          {/* Desktop Navigation - Top */}
+          <nav className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-50">
+              <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                  {/* Logo */}
+                  <div 
+                      className="flex items-center gap-2 cursor-pointer group" 
+                      onClick={() => { setCurrentScreen('welcome'); setIsMenuOpen(false); }}
+                  >
+                      <div className="bg-gradient-to-tr from-rose-500 to-indigo-600 p-1.5 rounded-lg text-white group-hover:scale-110 transition-transform">
+                          <Heart className="w-4 h-4 fill-white" />
+                      </div>
+                      <span className="font-black text-lg tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors">LovePersona</span>
                   </div>
-                  <span className="font-black text-lg tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors">LovePersona</span>
-              </div>
 
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center gap-1">
-                   {navItems.map(item => {
-                       const isActive = currentScreen === item.id || (item.id === 'welcome' && (currentScreen === 'quiz' || currentScreen === 'result'));
-                       return (
-                           <button 
-                              key={item.id}
-                              onClick={() => setCurrentScreen(item.id as any)} 
-                              className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                           >
-                              <item.icon className="w-4 h-4" /> 
-                              <span>{item.label}</span>
-                           </button>
-                       );
-                   })}
-                   <div className="w-px h-6 bg-slate-200 mx-2"></div>
-                   <button 
-                        onClick={() => setShowStyleSelector(true)}
-                        className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center gap-2 font-bold text-sm"
-                   >
-                       <Palette className="w-4 h-4" /> 画风
-                   </button>
+                  {/* Desktop Menu */}
+                  <div className="flex items-center gap-1">
+                       {navItems.map(item => {
+                           const isActive = currentScreen === item.id || (item.id === 'welcome' && (currentScreen === 'quiz' || currentScreen === 'result'));
+                           return (
+                               <button 
+                                  key={item.id}
+                                  onClick={() => setCurrentScreen(item.id as any)} 
+                                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                               >
+                                  <item.icon className="w-4 h-4" /> 
+                                  <span>{item.label}</span>
+                               </button>
+                           );
+                       })}
+                       <div className="w-px h-6 bg-slate-200 mx-2"></div>
+                       <button 
+                            onClick={() => setShowStyleSelector(true)}
+                            className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center gap-2 font-bold text-sm"
+                       >
+                           <Palette className="w-4 h-4" /> 画风
+                       </button>
+                  </div>
               </div>
+          </nav>
 
-              {/* Mobile Actions */}
-              <div className="md:hidden flex items-center gap-2">
-                <button 
-                    onClick={() => setShowStyleSelector(true)}
-                    className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                >
-                    <Palette className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
+          {/* Mobile Top Bar - Simple Logo */}
+          <div className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-50">
+              <div className="px-4 h-16 flex items-center justify-between">
+                  <div 
+                      className="flex items-center gap-2 cursor-pointer group" 
+                      onClick={() => { setCurrentScreen('welcome'); }}
+                  >
+                      <div className="bg-gradient-to-tr from-rose-500 to-indigo-600 p-1.5 rounded-lg text-white">
+                          <Heart className="w-4 h-4 fill-white" />
+                      </div>
+                      <span className="font-black text-lg tracking-tight text-slate-800">LovePersona</span>
+                  </div>
+                  <button 
+                      onClick={() => setShowStyleSelector(true)}
+                      className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                  >
+                      <Palette className="w-5 h-5" />
+                  </button>
               </div>
           </div>
 
-          {/* Mobile Dropdown Menu */}
-          {isMenuOpen && (
-              <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl p-4 flex flex-col gap-2 z-50 animate-in slide-in-from-top-5 duration-200">
+          {/* Mobile Bottom Navigation Bar */}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-inset-bottom">
+              <div className="flex justify-around items-center h-16 px-2">
                 {navItems.map(item => {
                    const isActive = currentScreen === item.id || (item.id === 'welcome' && (currentScreen === 'quiz' || currentScreen === 'result'));
                    return (
                        <button 
                           key={item.id}
-                          onClick={() => { setCurrentScreen(item.id as any); setIsMenuOpen(false); }} 
-                          className={`w-full p-4 rounded-xl font-bold text-base transition-all flex items-center gap-4 ${isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
+                          onClick={() => { setCurrentScreen(item.id as any); }} 
+                          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all flex-1 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}
                        >
-                          <div className={`p-2 rounded-lg ${isActive ? 'bg-white shadow-sm' : 'bg-slate-100'}`}>
-                            <item.icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                          </div>
-                          <span>{item.label}</span>
-                          {isActive && <div className="ml-auto w-2 h-2 rounded-full bg-indigo-600" />}
+                          <item.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
+                          <span className="text-xs font-bold whitespace-nowrap">{item.label}</span>
                        </button>
                    );
                 })}
               </div>
-          )}
-      </nav>
+          </nav>
+      </>
   );
 
   return (
-    <div className="font-sans text-slate-900 bg-slate-50 min-h-screen pb-10 relative">
+    <div className="font-sans text-slate-900 bg-slate-50 min-h-screen pb-20 md:pb-10 relative">
        <Navbar />
        {showStyleSelector && <StyleSelectorModal />}
        

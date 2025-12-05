@@ -26,6 +26,7 @@ export interface PersonalityProfile {
   blindSpots: string;  // 【恋爱盲点】
   partners: string;    // 【适合的伴侣类型】
   advice: string;      // 【相处建议】
+  roast: string;       // 【AI锐评】
 }
 
 export type PersonalityMap = Record<string, PersonalityProfile>;
